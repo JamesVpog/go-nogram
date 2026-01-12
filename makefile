@@ -3,6 +3,8 @@
 build:
 	go build -o ./bin/gonogram
 run:
-	go run .
+	go run ./...
+test:
+	go test ./...
 clean:
 	rm -rf ./bin
