@@ -3,8 +3,11 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/table"
 )
 
 type model struct {
@@ -17,8 +20,18 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	// what messages were sent to update?
+	case tea.KeyMsg:
+		switch msg.String(){			
+		// what was the keypress?
+		case "ctrl+c", "q":
+			return m, tea.Quit
+		}
+	}
 	return m, nil
 }
+
 
 func (m model) View() string {
 	return ""
