@@ -3,16 +3,19 @@ package main
 import (
 	"fmt"
 	"os"
-	"strconv"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/table"
 )
 
+type pos struct {
+	x int 
+	y int
+}
 type model struct {
 	board [][]int
 	solution [][]int
+	cursor pos
 }
 
 func (m model) Init() tea.Cmd {
@@ -27,6 +30,30 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// what was the keypress?
 		case "ctrl+c", "q":
 			return m, tea.Quit
+		case "k", "up":
+			// move the cursor up to the next row if possible
+			if m.cursor.y > 0 {	
+				m.cursor.y--
+			}
+		case "l", "right":
+			// move right to next col if possible
+			if m.cursor.x < len(m.board[0]) - 1 {
+				m.cursor.x++
+			}
+		case "j", "down":
+			if m.cursor.y < len(m.board) - 1 {
+				m.cursor.y++
+			}
+		case "h", "left":
+			if m.cursor.x > 0 {
+				m.cursor.x--
+			}
+		case " ", "enter":
+			// fill in the square at that position
+			m.board[m.cursor.x][m.cursor.y] = 1	
+		case "x", "X":
+			// draw x in the square at that position 
+			m.board[m.cursor.x][m.cursor.y] = 2
 		}
 	}
 	return m, nil
@@ -34,7 +61,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 
 func (m model) View() string {
-	return ""
+	//TODO: make grid
+	var s  strings.Builder	
+	fmt.Fprintf(&s, "You are at: (%d, %d)\n", m.cursor.x, m.cursor.y)
+	return s.String()
 }
 
 func initialModel() model {
@@ -58,4 +88,5 @@ func main(){
 		fmt.Printf("Error running program: %v\n", err)
 		os.Exit(1)
 	}
+	
 }
