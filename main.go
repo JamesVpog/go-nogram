@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type pos struct {
@@ -59,11 +61,36 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// 1. Define a consistent base style
+var cellStyle = lipgloss.NewStyle().
+    Width(20).
+    Height(5).
+    Align(lipgloss.Center, lipgloss.Center).
+    Border(lipgloss.NormalBorder())
 
 func (m model) View() string {
-	//TODO: make grid
-	var s  strings.Builder	
+	//TODO: make grid using the lipgloss.place. The table package is a bit too restrictive
+	
+	// loop through the m.board and render each cell, store in renderedCells
+	// join joinHorizontal to make a row, stored in rows
+
+	var rows []string
+	for r := range m.board {
+		var renderedCells []string
+		for c := range m.board[r] {
+			strForm := strconv.Itoa(m.board[r][c])
+			cell := cellStyle.Render(strForm)
+			renderedCells = append(renderedCells, cell)
+		}
+		row := lipgloss.JoinHorizontal(lipgloss.Top, renderedCells...)
+		rows = append(rows, row)
+	}
+	
+	grid := lipgloss.JoinVertical(lipgloss.Left, rows...)
+	var s  strings.Builder		
 	fmt.Fprintf(&s, "You are at: (%d, %d)\n", m.cursor.x, m.cursor.y)
+	fmt.Fprintf(&s, "\n%s\n", grid)
+	
 	return s.String()
 }
 
