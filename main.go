@@ -52,40 +52,52 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case " ", "enter":
 			// fill in the square at that position
-			m.board[m.cursor.x][m.cursor.y] = 1	
+			m.board[m.cursor.y][m.cursor.x] = 1	
 		case "x", "X":
 			// draw x in the square at that position 
-			m.board[m.cursor.x][m.cursor.y] = 2
+			m.board[m.cursor.y][m.cursor.x] = 2
 		}
 	}
 	return m, nil
 }
 
-// 1. Define a consistent base style
-var cellStyle = lipgloss.NewStyle().
-    Width(20).
-    Height(5).
-    Align(lipgloss.Center, lipgloss.Center).
-    Border(lipgloss.NormalBorder())
+// styles for the view
+var (	
+	cellStyle = lipgloss.NewStyle().
+	    Width(20).
+	    Height(5).
+	    Align(lipgloss.Center, lipgloss.Center).
+	    Border(lipgloss.NormalBorder())
+	
+	
+	highlightedCell = cellStyle.Copy().
+		Background(lipgloss.Color("1"))
+)
+
 
 func (m model) View() string {
-	//TODO: make grid using the lipgloss.place. The table package is a bit too restrictive
 	
 	// loop through the m.board and render each cell, store in renderedCells
-	// join joinHorizontal to make a row, stored in rows
-
+	// use joinHorizontal to make a row, stored in rows
 	var rows []string
 	for r := range m.board {
 		var renderedCells []string
 		for c := range m.board[r] {
 			strForm := strconv.Itoa(m.board[r][c])
-			cell := cellStyle.Render(strForm)
+			// if the cell is currently where the user is at highlight it!
+			var cell string
+			if r == m.cursor.y && c == m.cursor.x {
+				cell = highlightedCell.Render(strForm)
+			} else {
+				cell = cellStyle.Render(strForm)
+			}	
 			renderedCells = append(renderedCells, cell)
 		}
 		row := lipgloss.JoinHorizontal(lipgloss.Top, renderedCells...)
 		rows = append(rows, row)
 	}
 	
+	// send rows to joinVertical to make the grid
 	grid := lipgloss.JoinVertical(lipgloss.Left, rows...)
 	var s  strings.Builder		
 	fmt.Fprintf(&s, "You are at: (%d, %d)\n", m.cursor.x, m.cursor.y)
