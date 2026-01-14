@@ -11,8 +11,8 @@ import (
 )
 
 type pos struct {
-	x int 
-	y int
+	col int 
+	row int
 }
 type model struct {
 	board [][]int
@@ -34,28 +34,28 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "k", "up":
 			// move the cursor up to the next row if possible
-			if m.cursor.y > 0 {	
-				m.cursor.y--
+			if m.cursor.row > 0 {	
+				m.cursor.row--
 			}
 		case "l", "right":
 			// move right to next col if possible
-			if m.cursor.x < len(m.board[0]) - 1 {
-				m.cursor.x++
+			if m.cursor.col < len(m.board[0]) - 1 {
+				m.cursor.col++
 			}
 		case "j", "down":
-			if m.cursor.y < len(m.board) - 1 {
-				m.cursor.y++
+			if m.cursor.row < len(m.board) - 1 {
+				m.cursor.row++
 			}
 		case "h", "left":
-			if m.cursor.x > 0 {
-				m.cursor.x--
+			if m.cursor.col > 0 {
+				m.cursor.col--
 			}
 		case " ", "enter":
 			// fill in the square at that position
-			m.board[m.cursor.y][m.cursor.x] = 1	
+			m.board[m.cursor.row][m.cursor.col] = 1	
 		case "x", "X":
 			// draw x in the square at that position 
-			m.board[m.cursor.y][m.cursor.x] = 2
+			m.board[m.cursor.row][m.cursor.col] = 2
 		}
 	}
 	return m, nil
@@ -86,7 +86,7 @@ func (m model) View() string {
 			strForm := strconv.Itoa(m.board[r][c])
 			// if the cell is currently where the user is at highlight it!
 			var cell string
-			if r == m.cursor.y && c == m.cursor.x {
+			if r == m.cursor.row && c == m.cursor.col {
 				cell = highlightedCell.Render(strForm)
 			} else {
 				cell = cellStyle.Render(strForm)
@@ -100,7 +100,7 @@ func (m model) View() string {
 	// send rows to joinVertical to make the grid
 	grid := lipgloss.JoinVertical(lipgloss.Left, rows...)
 	var s  strings.Builder		
-	fmt.Fprintf(&s, "You are at: (%d, %d)\n", m.cursor.x, m.cursor.y)
+	fmt.Fprintf(&s, "You are at: (%d, %d)\n", m.cursor.col, m.cursor.row)
 	fmt.Fprintf(&s, "\n%s\n", grid)
 	
 	return s.String()
