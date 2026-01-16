@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -14,6 +15,9 @@ type pos struct {
 }
 type model struct {
 	board [][]int
+	rowHints [][]int
+	colHints [][]int
+	
 	solution [][]int
 	cursor pos
 	
@@ -94,7 +98,7 @@ var (
 
 
 func (m model) View() string {
-	
+
 	renderCell := func(r, c int) string {
 		isFocused := (r == m.cursor.row && c == m.cursor.col)
 		currentState := m.board[r][c]
@@ -138,15 +142,88 @@ func (m model) View() string {
 	}
 	
 	// send rows to joinVertical to make the grid
-	grid := lipgloss.JoinVertical(lipgloss.Left, rows...)
+	prettyPrintIntSlice := func(intSlice [][]int) string {
+		var s strings.Builder
+		fmt.Fprintf(&s, "%+v\n", intSlice)
+		return s.String()
+	}
+	// DEBUG: print how the hintstoo
+	rowHints := prettyPrintIntSlice(m.rowHints)
+	colHints := prettyPrintIntSlice(m.colHints)
 	
+	grid := lipgloss.JoinVertical(lipgloss.Left, rows...)
+	grid = lipgloss.JoinVertical(lipgloss.Left, grid, rowHints)
+	grid = lipgloss.JoinVertical(lipgloss.Left, grid, colHints)
 	//TODO: instructions on the bottom?
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, grid)
 }
 
+// generates the rowHints and colHints
+func (m *model) generateHints() {	
+
+	rows := len(m.solution)
+	cols := len(m.solution[0])
+	// to get the rowHints, iterate through the solution from top to bottom, for each row 
+	// add 1 to a running total if we keep seeing one, reset counter if we see a 0
+	for i := range rows {
+		consecutiveOnes := 0
+		var rowHint []int
+		
+		for j := range cols {
+			if m.solution[i][j] == 1 {
+				consecutiveOnes++
+			} else { // we see a 0, so reset concsecutiveOnes and append to rowHint
+				// only append if consecutiveOnes > 0
+				if consecutiveOnes > 0 {	
+					rowHint = append(rowHint, consecutiveOnes)	
+					consecutiveOnes = 0
+				}
+			}				
+		}
+		
+		// if it ends on a 1, the inner loop will end before we can append 
+		// so just check again at the end
+		if consecutiveOnes > 0 {
+			rowHint = append(rowHint, consecutiveOnes)
+		}
+		// append to the overall rowHints arr
+		m.rowHints = append(m.rowHints, rowHint)
+	}
+
+	// to get colHints, do the same thing but traverse column-wise 
+	
+	for j := range cols {
+		
+		consecutiveOnes := 0
+		var colHint []int
+		
+		for i := range rows {	
+			if m.solution[i][j] == 1 {
+				consecutiveOnes++
+			} else { // we see a 0, so reset concsecutiveOnes and append to rowHint
+				// only append if consecutiveOnes > 0
+				if consecutiveOnes > 0 {	
+					colHint = append(colHint, consecutiveOnes)	
+					consecutiveOnes = 0
+				}
+			}				
+		}
+		
+		
+		// if it ends on a 1, the inner loop will end before we can append 
+		// so just check again at the end
+		if consecutiveOnes > 0 {
+			colHint = append(colHint, consecutiveOnes)
+		}
+		// append to the overall rowHints arr
+		m.colHints = append(m.colHints, colHint)
+	}
+	
+	
+}
 func initialModel() model {
 	// example where filling in the middle square is the solution
-	return model{
+	m := model{
 		board: [][]int{
 			{0, 0, 0},
 		 	{0, 0, 0},
@@ -154,9 +231,12 @@ func initialModel() model {
 		
 		solution: [][]int{
 			{0, 0, 0},
-			{0, 1, 0},
+			{0, 1, 1},
 			{0, 0, 0}},
 	}
+
+	m.generateHints()
+	return m
 }
 
 func main(){	
@@ -164,7 +244,5 @@ func main(){
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error running program: %v\n", err)
 		os.Exit(1)
-	}
-	
-	
+	}	
 }
